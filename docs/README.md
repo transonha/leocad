@@ -1,75 +1,38 @@
-# About LeoCAD
+# About
 
+This customization involves integrating LeoCAD with an online database of building elements.
 LeoCAD is a CAD program for creating virtual LEGO(R) models. It's available
 for free under the GNU Public License v2 and works on the Windows, Linux
 and macOS Operating Systems.
 
+# Compiling
 
-# Installation
+## Compile server
+* Go to /server directory then open Visual Studio Code
+* Extract /server/data/ldraw.zip to the same directory
+* Type command: npm start
+* The server is available on http://localhost:3000
 
-You can download the latest version of LeoCAD and its Parts Library from
-the main website at https://www.leocad.org
+## Compile LeoCAD
+* Open leocad source by using Qt Creator
+* Navigate /common/lc_profile.cpp
+* Find and change ServerUrl setting to the above url: lcProfileEntry("Settings", "ServerUrl", "http://localhost:8080")
+* Build LeoCAD
+* Open & extract /resources/library.zip to build output folder, for example: ../build-leocad-Desktop_x86_windows_msvc2019_pe_64bit-Debug/build/debug/library
+* Run LeoCAD in debug mode
 
-It's recommended that you install the latest drivers for your video card
-since LeoCAD uses OpenGL to take advantage of hardware acceleration for
-rendering.
+# Testing
 
-## LeoCAD for Windows
+After initializing LeoCAD, it downloads the following categories from the server:
+- Animal
+- Antenna
+- Arch
+- Bar
+- Baseplate
 
-  Download the latest LeoCAD-Windows.exe to your computer, double click on
-  the icon to launch the installer and follow the instructions.
+Subsequently, when you click on the Animal category, LeoCAD downloads the relevant parts and displays them in the selection widget.
 
-## LeoCAD for Linux
-
-There are multiple ways to install LeoCAD on Linux.
-
-* Snap Store
-  
-  You can find LeoCAD in your distribution's Snap Store. Alternatively, you
-  can enter `sudo snap install leocad` to install it using the command line.
-
-* AppImage
-
-  Download the latest LeoCAD-Linux.AppImage, make the file executable
-  (`chmod +x`) and run it.
-
-* Flatpak
-
-  You can also install LeoCAD releases as a Flatpak from Flathub:
-    https://flathub.org/apps/details/org.leocad.LeoCAD
-
-  Note: there might be a delay for new releases to appear there. If
-  you have it already installed, it will be updated.
-
-* From source
-
-  If you prefer to compile LeoCAD yourself, go to the GitHub releases page
-  at https://github.com/leozide/leocad/releases/latest and download the
-  source archive from there. If you do not already have a Parts Library
-  installed, you will need to download one and follow the installation
-  instructions. More information on how to compile your own executable is
-  available in the Documentation section of https://www.leocad.org
-
-## LeoCAD for macOS
-
-  Download the latest LeoCAD-macOS.dmg to your computer, double click on
-  the icon to open the archive, copy LeoCAD.app to your Applications folder
-  and then launch it from there.
-
-New users should read the online tutorial located at
-https://www.leocad.org/docs/tutorial1.html to learn how to use LeoCAD.
-
-
-# Online Resources
-
-- Website:
-  https://www.leocad.org
-
-- GitHub page:
-  https://github.com/leozide/leocad
-
-- Unstable builds:
-  https://github.com/leozide/leocad/releases/tag/continuous
+![image](https://github.com/transonha/leocad/assets/81273348/553e030b-6b80-44df-8a10-727592beacd4)
 
 
 # Legal Disclaimer
