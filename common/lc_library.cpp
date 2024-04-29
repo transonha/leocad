@@ -13,6 +13,7 @@
 #include "project.h"
 #include "lc_profile.h"
 #include "lc_meshloader.h"
+#include "lc_http.h"
 #include <ctype.h>
 #include <locale.h>
 #include <zlib.h>
@@ -45,6 +46,9 @@ lcPiecesLibrary::lcPiecesLibrary()
 	mCancelLoading = false;
 	mStudStyle = static_cast<lcStudStyle>(lcGetProfileInt(LC_PROFILE_STUD_STYLE));
 	mStudCylinderColorEnabled = lcGetProfileInt(LC_PROFILE_STUD_CYLINDER_COLOR_ENABLED);
+
+    mHttpManager = new lcHttpManager(this);
+    connect(mHttpManager, SIGNAL(DownloadFinished(lcHttpReply*)), this, SLOT(DownloadFinished(lcHttpReply*)));
 }
 
 lcPiecesLibrary::~lcPiecesLibrary()
@@ -264,6 +268,7 @@ bool lcPiecesLibrary::Load(const QString& LibraryPath, bool ShowProgress)
 			return false;
 	}
 
+    DownloadCategories();
 	UpdateStudStyleSource();
 	lcLoadDefaultCategories();
 	lcSynthInit();
@@ -1731,6 +1736,8 @@ void lcPiecesLibrary::GetCategoryEntries(int CategoryIndex, bool GroupPieces, lc
 
 void lcPiecesLibrary::GetCategoryEntries(const char* CategoryKeywords, bool GroupPieces, lcArray<PieceInfo*>& SinglePieces, lcArray<PieceInfo*>& GroupedPieces)
 {
+    DownloadPieces(CategoryKeywords);
+
 	SinglePieces.RemoveAll();
 	GroupedPieces.RemoveAll();
 
@@ -1899,4 +1906,161 @@ bool lcPiecesLibrary::LoadBuiltinPieces()
 	lcSynthInit();
 
 	return true;
+}
+
+void lcPiecesLibrary::DownloadCategories()
+{
+    QString serverUrl = lcGetProfileString(LC_PROFILE_SERVER_URL);
+    mCategoryReply = mHttpManager->DownloadFile(serverUrl + "/categories");
+
+    QProgressDialog* ProgressDialog = new QProgressDialog(nullptr);
+    ProgressDialog->setWindowFlags(ProgressDialog->windowFlags() & ~Qt::WindowCloseButtonHint);
+    ProgressDialog->setWindowTitle(tr("Initializing"));
+    ProgressDialog->setLabelText(tr("Loading Category Library"));
+    ProgressDialog->setMaximum(100);
+    ProgressDialog->setMinimum(0);
+    ProgressDialog->setValue(50);
+    ProgressDialog->setCancelButton(nullptr);
+    ProgressDialog->setAutoReset(false);
+    ProgressDialog->show();
+
+    while (mCategoryReply)
+    {
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+
+    ProgressDialog->setValue(100);
+    QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+    ProgressDialog->deleteLater();
+}
+
+void lcPiecesLibrary::DownloadPieces(const char* CategoryKeywords)
+{
+    mPartSources.clear();
+
+    QString serverUrl = lcGetProfileString(LC_PROFILE_SERVER_URL);
+    QString url = serverUrl + "/parts?category=" + QUrl::toPercentEncoding(CategoryKeywords);
+    mPartReply = mHttpManager->DownloadFile(url);
+
+    QProgressDialog* ProgressDialog = new QProgressDialog(nullptr);
+    ProgressDialog->setWindowFlags(ProgressDialog->windowFlags() & ~Qt::WindowCloseButtonHint);
+    ProgressDialog->setWindowTitle(tr("Initializing"));
+    ProgressDialog->setLabelText(tr("Loading Category Library"));
+    ProgressDialog->setMaximum(100);
+    ProgressDialog->setMinimum(0);
+    ProgressDialog->setValue(10);
+    ProgressDialog->setCancelButton(nullptr);
+    ProgressDialog->setAutoReset(false);
+    ProgressDialog->show();
+
+    while (mPartReply)
+    {
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    }
+
+    ProgressDialog->setValue(50);
+    QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+    bool needSynth = false;
+    for (const auto& it : mPartSources) {
+        bool found = false;
+        for (const auto& PieceIt : mPieces)
+        {
+            PieceInfo* Info = PieceIt.second;
+            if (it.FileName == Info->mFileName)
+            {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            needSynth = true;
+            mDownloadedPartData.clear();
+            mPartFileReply = mHttpManager->DownloadFile(serverUrl + "/part/download/" + it.FileName);
+            while (mPartFileReply)
+            {
+                QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+            }
+            ProgressDialog->setValue(50);
+            QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+            if (mDownloadedPartData.size() > 0) {
+                QString partFolder = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/ldraw/parts/";
+                QString filePath = partFolder + it.FileName;
+                QFile file(filePath);
+                int partLength = mDownloadedPartData.size();
+                file.open(QIODevice::WriteOnly | QIODevice::Truncate);
+                file.seek(0);
+                file.write(mDownloadedPartData.data(), partLength);
+
+                PieceInfo* Info = new PieceInfo();
+
+                strncpy(Info->mFileName, it.FileName.toStdString().c_str(), sizeof(Info->mFileName));
+                strncpy(Info->m_strDescription, it.Description.toStdString().c_str(), sizeof (Info->m_strDescription));
+                Info->mFileName[sizeof(Info->mFileName) - 1] = 0;
+                Info->mFolderType = 0;
+                Info->mFolderIndex = mPieces.size();
+
+                mPieces[it.FileName.toUpper().toStdString()] = Info;
+            }
+        }
+    }
+
+    if (needSynth) {
+        lcSynthInit();
+    }
+
+    ProgressDialog->setValue(100);
+    QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+    ProgressDialog->deleteLater();
+}
+
+void lcPiecesLibrary::DownloadFinished(lcHttpReply* Reply)
+{
+    if (Reply == mCategoryReply)
+    {
+        if (!Reply->error())
+        {
+            gCategories.clear();
+            QJsonDocument Document = QJsonDocument::fromJson(Reply->readAll());
+            QJsonArray Categories = Document.array();
+            for (const QJsonValue& CategoryRef : Categories) {
+                QJsonObject Category = CategoryRef.toObject();
+                lcLibraryCategory lcCategory;
+                lcCategory.Name = Category["name"].toString();
+                lcCategory.Keywords = Category["keywords"].toString().toLatin1();
+                gCategories.emplace_back(lcCategory);
+            }
+            lcSaveDefaultCategories();
+        }
+        mCategoryReply = nullptr;
+    }
+    else if (Reply == mPartReply) {
+        if (!Reply->error())
+        {
+            QJsonDocument Document = QJsonDocument::fromJson(Reply->readAll());
+            QJsonArray Parts = Document.array();
+            for (const QJsonValue& PartRef : Parts) {
+                QJsonObject Part = PartRef.toObject();
+                lcPartSource lcPartSource;
+                lcPartSource.FileName = Part["fileName"].toString();
+                lcPartSource.Description = Part["description"].toString().toLatin1();
+                mPartSources.emplace_back(lcPartSource);
+            }
+        }
+        mPartReply = nullptr;
+    }
+    else if (Reply == mPartFileReply) {
+        if (!Reply->error())
+        {
+            mDownloadedPartData.clear();
+            mDownloadedPartData.append(Reply->readAll());
+        }
+        mPartFileReply = nullptr;
+    }
+
+    Reply->deleteLater();
 }

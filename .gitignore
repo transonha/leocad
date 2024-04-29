@@ -38,3 +38,5 @@ uic_wrapper.bat
 appdir
 LeoCAD-Windows*.exe
 *.snap
+/server/node_modules
+/server/data/ldraw

@@ -8,6 +8,8 @@
 class PieceInfo;
 class lcZipFile;
 class lcLibraryMeshData;
+class lcHttpReply;
+class lcHttpManager;
 
 enum class lcStudStyle
 {
@@ -114,6 +116,12 @@ struct lcLibrarySource
 	std::map<std::string, lcLibraryPrimitive*> Primitives;
 };
 
+struct lcPartSource
+{
+    QString FileName;
+    QString Description;
+};
+
 class lcPiecesLibrary : public QObject
 {
 	Q_OBJECT
@@ -199,6 +207,9 @@ signals:
 	void PartLoaded(PieceInfo* Info);
 	void ColorsLoaded();
 
+public slots:
+    void DownloadFinished(lcHttpReply* Reply);
+
 protected:
 	bool OpenArchive(const QString& FileName, lcZipFileType ZipFileType);
 	bool OpenArchive(std::unique_ptr<lcFile> File, lcZipFileType ZipFileType);
@@ -221,6 +232,9 @@ protected:
 
 	void ReleaseBuffers();
 
+    void DownloadCategories();
+    void DownloadPieces(const char* CategoryKeywords);
+
 	std::vector<std::unique_ptr<lcLibrarySource>> mSources;
 
 #if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
@@ -241,4 +255,13 @@ protected:
 	std::unique_ptr<lcZipFile> mZipFiles[static_cast<int>(lcZipFileType::Count)];
 	bool mHasUnofficial;
 	bool mCancelLoading;
+
+    std::vector<lcPartSource> mPartSources;
+    QByteArray mDownloadedPartData;
+
+    // Responsible for downloading categories & parts from part hub
+    lcHttpManager* mHttpManager;
+    lcHttpReply* mCategoryReply;
+    lcHttpReply* mPartReply;
+    lcHttpReply* mPartFileReply;
 };

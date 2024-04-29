@@ -136,6 +136,46 @@ static void lcInitializeSurfaceFormat(int argc, char* argv[])
 	}
 }
 
+static QString initializePartDir()
+{
+    // Create a folder to contain parts downloaded from LeoCAD server
+    QString ldrawFolder = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/ldraw";
+    QDir ldrawDir(ldrawFolder);
+    if (ldrawDir.exists()) {
+        ldrawDir.removeRecursively();
+    }
+    if (!ldrawDir.exists()) {
+        ldrawDir.mkpath(".");
+
+        QString libraryFolder = QCoreApplication::applicationDirPath() + "/library/ldraw";
+        QDirIterator it(libraryFolder, QDirIterator::Subdirectories);
+        QDir dir(libraryFolder);
+        const int absSourcePathLength = dir.absoluteFilePath(libraryFolder).length();
+
+        while (it.hasNext()){
+            it.next();
+            const auto fileInfo = it.fileInfo();
+            if(!fileInfo.isHidden()) { //filters dot and dotdot
+                const QString subPathStructure = fileInfo.absoluteFilePath().mid(absSourcePathLength);
+                const QString constructedAbsolutePath = ldrawFolder + subPathStructure;
+
+                if(fileInfo.isDir()){
+                    //Create directory in target folder
+                    dir.mkpath(constructedAbsolutePath);
+                } else if(fileInfo.isFile()) {
+                    //Copy File to target directory
+
+                    //Remove file at target location, if it exists, or QFile::copy will fail
+                    QFile::remove(constructedAbsolutePath);
+                    QFile::copy(fileInfo.absoluteFilePath(), constructedAbsolutePath);
+                }
+            }
+        }
+    }
+
+    return ldrawFolder;
+}
+
 int main(int argc, char *argv[])
 {
 	QCoreApplication::setOrganizationDomain(QLatin1String("leocad.org"));
@@ -184,6 +224,9 @@ int main(int argc, char *argv[])
 #endif
 
 	QList<QPair<QString, bool>> LibraryPaths;
+
+    QString ldrawFolder = initializePartDir();
+    LibraryPaths += qMakePair(ldrawFolder, false);
 
 #ifdef Q_OS_WIN
 	lcRegisterShellFileTypes();

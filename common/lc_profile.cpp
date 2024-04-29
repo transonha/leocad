@@ -166,7 +166,8 @@ static lcProfileEntry gProfileEntries[LC_NUM_PROFILE_KEYS] =
 	lcProfileEntry("Settings", "DarkEdgeColor", LC_RGBA(27, 42, 52, 255)),                     // LC_PROFILE_DARK_EDGE_COLOR
 	lcProfileEntry("Settings", "PartEdgeContrast", 0.5f),                                      // LC_PROFILE_PART_EDGE_CONTRAST
 	lcProfileEntry("Settings", "PartColorValueLDIndex", 0.5f),                                 // LC_PROFILE_PART_COLOR_VALUE_LD_INDEX
-	lcProfileEntry("Settings", "AutomateEdgeColor", 0)                                         // LC_PROFILE_AUTOMATE_EDGE_COLOR
+    lcProfileEntry("Settings", "AutomateEdgeColor", 0),                                         // LC_PROFILE_AUTOMATE_EDGE_COLOR
+    lcProfileEntry("Settings", "ServerUrl", "http://localhost:8080")                                     // LC_PROFILE_SERVER_URL
 };
 
 void lcRemoveProfileKey(LC_PROFILE_KEY Key)

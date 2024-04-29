@@ -1,0 +1,130 @@
+openapi: 3.0.0
+info:
+  title: home-iot-api
+  description: The API for the EatBacon IOT project
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+  description: SwaggerHub API Auto Mocking
+paths:
+  /categories:
+    get:
+      tags:
+      - Category
+      description: returns all registered categories
+      operationId: getCategories
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+                x-content-type: application/json
+      x-swagger-router-controller: Category
+  /parts:
+    get:
+      tags:
+      - Part
+      description: returns all registered parts
+      operationId: getParts
+      parameters:
+      - name: category
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Part'
+                x-content-type: application/json
+      x-swagger-router-controller: Part
+  /part/download/{fileName}:
+    get:
+      tags:
+      - Part
+      description: returns all registered parts
+      operationId: downloadPart
+      parameters:
+      - name: fileName
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: ok
+          content:
+            application/vnd.leocad:
+              schema:
+                type: string
+                format: binary
+                x-content-type: application/vnd.leocad
+      x-swagger-router-controller: Part
+  /part/download:
+    get:
+      tags:
+      - Part
+      description: returns all registered parts
+      operationId: download
+      parameters:
+      - name: type
+        in: query
+        required: true
+        style: form
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: ok
+          content:
+            application/vnd.leocad:
+              schema:
+                type: string
+                format: binary
+                x-content-type: application/vnd.leocad
+      x-swagger-router-controller: Part
+components:
+  schemas:
+    Category:
+      type: object
+      properties:
+        name:
+          type: string
+        keywords:
+          type: string
+        parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Part'
+      example:
+        keywords: keywords
+        name: name
+        parts:
+        - fileName: fileName
+          description: description
+        - fileName: fileName
+          description: description
+    Part:
+      type: object
+      properties:
+        fileName:
+          type: string
+        description:
+          type: string
+      example:
+        fileName: fileName
+        description: description
