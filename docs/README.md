@@ -40,10 +40,10 @@ Subsequently, when you click on the Animal category, LeoCAD downloads the releva
 
 # Code Modification
 ## Download categories at application startup
-![image](https://github.com/transonha/leocad/assets/81273348/93e38838-f9db-4b6a-b244-eb8995adb05f)
+![image](https://github.com/transonha/leocad/assets/81273348/c1acce43-9a64-4941-bc3c-b31c819be666)
 
 ## Download parts when user select a category
-![image](https://github.com/transonha/leocad/assets/81273348/d7c4df36-3594-4bb7-8331-f5b2533c1dc6)
+![image](https://github.com/transonha/leocad/assets/81273348/b0e39a15-6820-499e-b8aa-a1203a3d4703)
 
 # Legal Disclaimer
 
