@@ -1,6 +1,7 @@
 # About
 
 This customization involves integrating LeoCAD with an online database of building elements.
+
 LeoCAD is a CAD program for creating virtual LEGO(R) models. It's available
 for free under the GNU Public License v2 and works on the Windows, Linux
 and macOS Operating Systems.
@@ -34,6 +35,15 @@ Subsequently, when you click on the Animal category, LeoCAD downloads the releva
 
 ![image](https://github.com/transonha/leocad/assets/81273348/553e030b-6b80-44df-8a10-727592beacd4)
 
+# Customization Ideas
+![image](https://github.com/transonha/leocad/assets/81273348/d34feaf0-6b59-4adb-9a27-076e61ec1a29)
+
+# Code Modification
+## Download categories at application startup
+![image](https://github.com/transonha/leocad/assets/81273348/93e38838-f9db-4b6a-b244-eb8995adb05f)
+
+## Download parts when user select a category
+![image](https://github.com/transonha/leocad/assets/81273348/d7c4df36-3594-4bb7-8331-f5b2533c1dc6)
 
 # Legal Disclaimer
 
